@@ -15,6 +15,7 @@ from extract_features import process_all_videos
 from build_index import build_index
 from search_duplicates import find_duplicates
 from visualize import generate
+from generate_deletion_guide import generate_deletion_guide
 import json
 import os
 
@@ -151,13 +152,18 @@ def main():
     
     print("\n[4/4] 生成报告...")
     report = generate()
-    
+
+    print("\n[5/5] 生成删除指南...")
+    deletion_guide = generate_deletion_guide()
+
     print(f"\n{'='*60}")
     print(f"完成! 耗时: {time.time()-t0:.1f}秒")
     print(f"重复片段: {len(dups)} 个")
     print(f"报告: {report}")
+    if deletion_guide:
+        print(f"删除指南已生成")
     print(f"{'='*60}")
-    
+
     # 尝试打开报告
     try:
         import webbrowser

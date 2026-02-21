@@ -24,6 +24,10 @@ env/
 *.pt
 *.pth
 
+# 缓存和输出目录
+cache/
+output/
+
 # 输出报告中的图片 (可选，如果图片很多就不传)
 output/frames/
 

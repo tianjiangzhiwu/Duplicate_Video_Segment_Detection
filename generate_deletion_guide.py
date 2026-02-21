@@ -6,6 +6,7 @@
 
 import json
 import cv2
+import time
 from pathlib import Path
 from config import *
 
@@ -35,9 +36,13 @@ def calculate_video_quality_score(video_path):
     return width * height  # 简单地使用像素总数作为质量指标
 
 
-def generate_deletion_guide(duplicates_json_path=None):
+def generate_deletion_guide(duplicates_json_path=None, save_structured_json=True):
     """
     生成视频删除指南
+
+    Args:
+        duplicates_json_path: 重复片段JSON文件路径
+        save_structured_json: 是否保存结构化的JSON格式指南
     """
     if duplicates_json_path is None:
         duplicates_json_path = OUTPUT_DIR / "duplicates.json"
@@ -193,6 +198,40 @@ def generate_deletion_guide(duplicates_json_path=None):
             f.write("\n")
 
     print(f"\n文本版删除指南已保存到: {guide_text_path}")
+
+    # 保存结构化的JSON格式指南，用于自动删除
+    if save_structured_json:
+        guide_json_path = OUTPUT_DIR / "deletion_guide.json"
+        structured_guide = {
+            'videos_to_process': [],
+            'total_duplicates': len(deletion_guide),
+            'guide_created_at': time.strftime('%Y-%m-%d %H:%M:%S')
+        }
+
+        for video_path in sorted_videos:
+            suggestions = deletion_by_video[video_path]
+            video_info = {
+                'video_path': video_path,
+                'video_name': Path(video_path).name,
+                'deletion_segments': []
+            }
+
+            sorted_suggestions = sorted(suggestions, key=lambda x: x['time_to_delete'][0])
+            for suggestion in sorted_suggestions:
+                segment_info = {
+                    'time_to_delete': suggestion['time_to_delete'],
+                    'duration': suggestion['duration'],
+                    'similarity': suggestion['similarity'],
+                    'reason': suggestion['reason']
+                }
+                video_info['deletion_segments'].append(segment_info)
+
+            structured_guide['videos_to_process'].append(video_info)
+
+        with open(guide_json_path, 'w', encoding='utf-8') as f:
+            json.dump(structured_guide, f, ensure_ascii=False, indent=2)
+
+        print(f"结构化JSON删除指南已保存到: {guide_json_path}")
 
     return deletion_guide
 
